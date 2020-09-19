@@ -1,5 +1,35 @@
+import sys
+
 import paho.mqtt.client as mqtt
 import time
+
+
+def setup_client(client):
+    client.username_pw_set(username='mobilni', password='Systemy')
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect(broker_address, port=1883)  # connect to broker
+    client.loop_start()
+
+
+def create_user():
+    pass
+
+
+def login():
+    pass
+
+
+def logout():
+    pass
+
+
+def send_message():
+    pass
+
+
+def receive_message():
+    pass
 
 
 def on_connect(client, userdata, flags, rc):
@@ -12,35 +42,36 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
-    print(f'Client {client} Message received: {message.payload}')
+    print(f'Client {client._client_id} Message received: {message.payload}')
 
 
 Connected = False
 broker_address = "pcfeib425t.vsb.cz"
-client = mqtt.Client("client1")  # create new instance
-client.username_pw_set(username='mobilni', password='Systemy')
-client.on_connect = on_connect
-client.on_message = on_message
-client.connect(broker_address, port=1883)  # connect to broker
-client2 = mqtt.Client("client2")  # create new instance
-client2.username_pw_set(username='mobilni', password='Systemy')
-client2.on_connect = on_connect
-client2.on_message = on_message
-client2.connect(broker_address, port=1883)
-# client.publish("/mschat/user/id_příjemce/id_odesilatele","OFF")#publish
-client.loop_start()
-client2.loop_start()
+username1 = "mac0441"
+username2 = "mac0441_test"
+client1 = mqtt.Client(client_id=username1, clean_session=False)  # create new instance
+client2 = mqtt.Client(client_id=username2, clean_session=False)
+clients = [client1, client2]
+for client in clients:
+    setup_client(client)
+
 while Connected != True:  # Wait for connection
     time.sleep(0.1)
-client.subscribe("/mschat/#")
-client2.subscribe("/mschat/#")
+client1.subscribe(f"/mschat/all/#")
+client1.subscribe(f"/mschat/status/#")
+client2.subscribe(f"/mschat/status/#")
+client1.publish(f"/mschat/status/{username1}", "online")
+client2.publish(f"/mschat/status/{username2}", "online")
+client1.publish(f"/mschat/user/{username2}/{username1}", "Test message from client1")
+client2.publish(f"/mschat/user/{username1}/{username2}", "Test message from client2")
 
 try:
     while True:
         time.sleep(1)
 except KeyboardInterrupt:
     print('exiting')
-    client.disconnect()
-    client.loop_stop()
+    client1.disconnect()
+    client1.loop_stop()
     client2.disconnect()
     client2.loop_stop()
+    sys.exit()
